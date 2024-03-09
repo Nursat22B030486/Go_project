@@ -8,6 +8,8 @@ import (
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
+
+	"github.com/Nursat22B030486/go_project/pkg/read-it/model"
 )
 
 type config struct {
@@ -16,6 +18,11 @@ type config struct {
 	db   struct {
 		dsn string
 	}
+}
+
+type application struct {
+	config config
+	models model.Models
 }
 
 func main() {
@@ -35,17 +42,26 @@ func main() {
 	}
 	defer db.Close()
 
+	app := &application{
+		config: cfg,
+		models: model.NewModule(db),
+	}
+
+	app.run()
+
+}
+func (app *application) run() {
 	r := mux.NewRouter()
 
 	v1 := r.PathPrefix("/api/v1").Subrouter()
 
-	v1.HandleFunc("/articles", CreateArticleHandler).Methods("POST")
-	v1.HandleFunc("/articles/{articleId:[0-9]+}", GetArticleHandler).Methods("Get")
-	v1.HandleFunc("/articles/{articleId:[0-9]+}", UpdateArticleHandler).Methods("PUT")
-	v1.HandleFunc("/articles/{articleId:[0-9]+}", DeleteArticleHandler).Methods("DELETE")
+	v1.HandleFunc("/articles", app.CreateArticleHandler).Methods("POST")
+	v1.HandleFunc("/articles/{articleId:[0-9]+}", app.getArticleHandler).Methods("Get")
+	v1.HandleFunc("/articles/{articleId:[0-9]+}", app.updateArticleHandler).Methods("PUT")
+	v1.HandleFunc("/articles/{articleId:[0-9]+}", app.deleteArticleHandler).Methods("DELETE")
 
-	log.Printf("Starting server on %s\n", cfg.port)
-	err1 := http.ListenAndServe(cfg.port, r)
+	log.Printf("Starting server on %s\n", app.config.port)
+	err1 := http.ListenAndServe(app.config.port, r)
 	log.Fatal(err1)
 
 }
