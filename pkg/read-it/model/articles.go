@@ -10,9 +10,9 @@ import (
 type Article struct {
 	Id        string `json:"id"`
 	Title     string `json:"title"`
-	AuthorId  string `json:"author_id"`
+	// AuthorId  uint `json:"author_id"`
 	Genre     string `json:"genre"`
-	Body      string `json:"text"`
+	Body      string `json:"body"`
 	CreatedAt string `json:"createdAt"`
 	UpdatedAt string `json:"updatedAt"`
 }
@@ -23,24 +23,23 @@ type ArticleModel struct {
 	ErrorLog *log.Logger
 }
 
-func (a ArticleModel) Insert(article *Article) error {
+func (a ArticleModel) Insert(article *Article) {
 	query := `
-		INSERT INTO "Articles"(title, author_id, genre, body)
-		VALUES ($1, $2, $3, $4)
-		RETURNING id, created_at, update_at
+		INSERT INTO articles(title, genre, body)
+		VALUES ($1, $2, $3)
 	`
-	args := []interface{}{article.Title, article.AuthorId, article.Genre, article.Body}
+	args := []interface{}{article.Title, article.Genre, article.Body}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	return a.DB.QueryRowContext(ctx, query, args...).Scan(&article.Id, &article.CreatedAt, &article.UpdatedAt)
+	a.DB.QueryRowContext(ctx, query, args...)
 }
 
 func (a ArticleModel) Get(id int) (*Article, error) {
 	query := `
-		SELECT id, title, author_id, genre, body, created_at, updated_at 
-		FROM "Articles"
+		SELECT id, title, genre, body, created_at, updated_at 
+		FROM articles
 		where id = $1
 	`
 	var article Article
@@ -48,7 +47,7 @@ func (a ArticleModel) Get(id int) (*Article, error) {
 	defer cancel()
 
 	row := a.DB.QueryRowContext(ctx, query, id)
-	err := row.Scan(&article.Id, &article.Title, &article.AuthorId, &article.Genre, &article.Body, &article.CreatedAt, &article.UpdatedAt)
+	err := row.Scan(&article.Id, &article.Title, &article.Genre, &article.Body, &article.CreatedAt, &article.UpdatedAt)
 
 	if err != nil {
 		return nil, err
@@ -59,13 +58,13 @@ func (a ArticleModel) Get(id int) (*Article, error) {
 
 func (a ArticleModel) Update(article Article) error {
 	query := `
-		UPDATE "Articles"
-		SET title = $1, author_id = $2, genre = $3, body = $4
-		WHERE id = $5
+		UPDATE articles
+		SET title = $1, genre = $2, body = $3,
+		WHERE id = $4
 		RETURNING updated_at 	
 	`
 
-	args := []interface{}{article.Title, article.AuthorId, article.Genre, article.Body, article.Id}
+	args := []interface{}{article.Title, article.Genre, article.Body, article.Id}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -74,7 +73,7 @@ func (a ArticleModel) Update(article Article) error {
 
 func (a ArticleModel) Delete(id int) error {
 	query := `
-		DELETE FROM "Articles"
+		DELETE FROM articles
 		WHERE id = $1	
 	`
 	ctx, cancel :=context.WithTimeout(context.Background(), 3*time.Second)

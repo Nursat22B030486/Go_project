@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+
 	"net/http"
 
 	"strconv"
@@ -27,12 +28,12 @@ func (app *application) respondWithJSON(w http.ResponseWriter, code int, payload
 	w.Write(response)
 }
 
-func (app *application) CreateArticleHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application) createArticleHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Title    string `json:"title"`
-		AuthorId string `json:"author_id"`
-		Genre    string `json:"genre"`
-		Body     string `json:"text"`
+		Title string `json:"title"`
+		// AuthorId uint   `json:"author_id"`
+		Genre string `json:"genre"`
+		Body  string `json:"body"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -42,17 +43,18 @@ func (app *application) CreateArticleHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	article := &model.Article{
-		Title:    input.Title,
-		AuthorId: input.AuthorId,
-		Genre:    input.Genre,
-		Body:     input.Body,
+		Title: input.Title,
+		// AuthorId: input.AuthorId,
+		Genre: input.Genre,
+		Body:  input.Body,
 	}
-
-	err = app.models.Articles.Insert(article)
-	if err != nil {
-		app.respondWithError(w, http.StatusInternalServerError, "500 Internal Server Error")
-		return
-	}
+	app.models.Articles.Insert(article)
+	// err =
+	// if err != nil {
+	// 	app.respondWithError(w, http.StatusInternalServerError, "500 Internal Server Error")
+	// 	fmt.Println(err)
+	// 	return
+	// }
 
 	app.respondWithJSON(w, http.StatusCreated, article)
 
@@ -64,7 +66,7 @@ func (app *application) getArticleHandler(w http.ResponseWriter, r *http.Request
 
 	id, err := strconv.Atoi(param)
 	if err != nil || id < 1 {
-		app.respondWithError(w, http.StatusBadRequest, "Invalid menu ID")
+		app.respondWithError(w, http.StatusBadRequest, "Invalid article ID")
 		return
 	}
 
@@ -83,7 +85,7 @@ func (app *application) updateArticleHandler(w http.ResponseWriter, r *http.Requ
 
 	id, err := strconv.Atoi(param)
 	if err != nil || id < 1 {
-		app.respondWithError(w, http.StatusBadRequest, "Invalid menu ID")
+		app.respondWithError(w, http.StatusBadRequest, "Invalid article ID")
 		return
 	}
 
@@ -94,15 +96,15 @@ func (app *application) updateArticleHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	var input struct {
-		Title    *string `json:"title"`
-		AuthorId *string `json:"author_id"`
-		Genre    *string  `json:"genre"`
-		Body     *string  `json:"text"`
+		Title *string `json:"title"`
+		// AuthorId *uint   `json:"author_id"`
+		Genre *string `json:"genre"`
+		Body  *string `json:"body"`
 	}
 
 	err = app.readJSON(w, r, &input)
 	if err != nil {
-		app.respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		app.respondWithError(w, http.StatusBadRequest, "Invalid request")
 		return
 	}
 
@@ -110,9 +112,9 @@ func (app *application) updateArticleHandler(w http.ResponseWriter, r *http.Requ
 		article.Title = *input.Title
 	}
 
-	if input.AuthorId != nil {
-		article.AuthorId = *input.AuthorId
-	}
+	// if input.AuthorId != nil {
+	// 	article.AuthorId = *input.AuthorId
+	// }
 
 	if input.Genre != nil {
 		article.Genre = *input.Genre
@@ -129,11 +131,11 @@ func (app *application) updateArticleHandler(w http.ResponseWriter, r *http.Requ
 
 func (app *application) deleteArticleHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	param := vars["menuId"]
+	param := vars["articleId"]
 
 	id, err := strconv.Atoi(param)
 	if err != nil || id < 1 {
-		app.respondWithError(w, http.StatusBadRequest, "Invalid menu ID")
+		app.respondWithError(w, http.StatusBadRequest, "Invalid article ID")
 		return
 	}
 
