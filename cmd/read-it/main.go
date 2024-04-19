@@ -6,15 +6,17 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"time"
 
-	"github.com/gorilla/mux"
+	_ "github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 
 	"github.com/Nursat22B030486/go_project/pkg/read-it/model"
 )
 
 type config struct {
-	port string
+	port int
 	env  string
 	db   struct {
 		dsn string
@@ -24,23 +26,27 @@ type config struct {
 type application struct {
 	config config
 	models model.Models
+	logger *log.Logger
 }
 
 func main() {
 	var cfg config
-	flag.StringVar(&cfg.port, "port", ":8888", "API server port")
+	flag.IntVar(&cfg.port, "port", 8888, "API server port")
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
-	flag.StringVar(&cfg.db.dsn, "db-dsn", "postgres://postgres@localhost:5432/readit", "PostgreSQL DSN")
+	flag.StringVar(&cfg.db.dsn, "db-dsn", "postgresql://postgres:pa55word@localhost:5432/readit?sslmode=disable", "PostgreSQL DSN")
 	flag.Parse()
 
-	// connect to DB
+	// Initialization of new looger 
+	logger := log.New(os.Stdout, "", log.Ldate | log.Ltime)
 
+
+	// connect to DB
 	db, err := openDB(cfg)
 
-	if err3 := db.Ping(); err3 != nil {
-		fmt.Println(err3)
-		return
-	}
+	// if err3 := db.Ping(); err3 != nil {
+	// 	fmt.Println(err3)
+	// 	return
+	// }
 
 	if err != nil {
 		log.Fatal(err)
@@ -52,29 +58,27 @@ func main() {
 	app := &application{
 		config: cfg,
 		models: model.NewModule(db),
+		logger: logger,
 	}
 
-	app.run()
+	srv := &http.Server{
+		Addr: fmt.Sprintf(":%d", cfg.port),
+		Handler: app.routes(),
+		IdleTimeout: time.Minute,
+		ReadTimeout: 10 * time.Second,
+		WriteTimeout: 30 * time.Second,
+	}
+
+	logger.Printf("Starting %s server on %s\n", cfg.env, srv.Addr)
+	err1 := srv.ListenAndServe()
+	logger.Fatal(err1)
 
 }
-func (app *application) run() {
-	r := mux.NewRouter()
 
-	// v1 := r.PathPrefix("/api/v1").Subrouter()
-
-	r.HandleFunc("/articles", app.createArticleHandler).Methods("POST")
-	r.HandleFunc("/articles/{articleId:[0-9]+}", app.getArticleHandler).Methods("GET")
-	r.HandleFunc("/articles/{articleId:[0-9]+}", app.updateArticleHandler).Methods("PUT")
-	r.HandleFunc("/articles/{articleId:[0-9]+}", app.deleteArticleHandler).Methods("DELETE")
-
-	log.Printf("Starting server on %s\n", app.config.port)
-	err1 := http.ListenAndServe(app.config.port, r)
-	log.Fatal(err1)
-
-}
 
 func openDB(cfg config) (*sql.DB, error) {
-	db, err := sql.Open("postgres", "user=postgres password=pa55word dbname=readit sslmode=disable")
+	// db, err := sql.Open("postgres", "user=postgres password=pa55word dbname=readit sslmode=disable")
+	db, err := sql.Open("postgres", cfg.db.dsn)
 	if err != nil {
 		return nil, err
 	}
