@@ -9,7 +9,13 @@ import (
 // book we'll upgrade this to use structured logging, and record additional information
 // about the request including the HTTP method and URL.
 func (app *application) logError(r *http.Request, err error) {
-	app.logger.Println(err)
+	// Use the PrintError() method to log the error message, and include the current
+	// request method and URL as properties in the log entry.
+	app.logger.PrintError(err, map[string]string{
+		"request_method": r.Method,
+		"request_url":    r.URL.String(),
+	})
+
 }
 
 // notFoundResponse method is used to send a 404 Not Found status code and JSON response to the
@@ -24,6 +30,11 @@ func (app *application) notFoundResponse(w http.ResponseWriter, r *http.Request)
 func (app *application) methodNotAllowedResponse(w http.ResponseWriter, r *http.Request) {
 	message := fmt.Sprintf("the %s method is not supported this resource", r.Method)
 	app.errorResponse(w, r, http.StatusMethodNotAllowed, message)
+}
+
+// badRequestResponse sends JSON-formatted error message with 400 Bad Request status code.
+func (app *application) badRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
+	app.errorResponse(w, r, http.StatusBadRequest, err.Error())
 }
 
 // The errorResponse() method is a generic helper for sending JSON-formatted error
@@ -42,15 +53,52 @@ func (app *application) errorResponse(w http.ResponseWriter, r *http.Request, st
 	}
 }
 
+func (app *application) editConflictResponse(w http.ResponseWriter, r *http.Request) {
+	message := "unable to update the record due to an edit conflict, please try again"
+	app.errorResponse(w, r, http.StatusConflict, message)
+}
+
+// invalidCredentialsResponse sends a JSON-formatted error with a 401 Unauthorized status code
+// to the client.
+func (app *application) invalidCredentialsResponse(w http.ResponseWriter, r *http.Request) {
+	message := "invalid authentication credentials"
+	app.errorResponse(w, r, http.StatusUnauthorized, message)
+}
+
+func (app *application) invalidAuthenticationTokenResponse(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("WWW-Authenticate", "Bearer")
+	message := "invalid or missing authentication token"
+	app.errorResponse(w, r, http.StatusUnauthorized, message)
+}
+	
+
 // serverErrorResponse method is used when our application encounters an unexpected problem
 // at runtime. it logs the detailed error message, then uses the errorResponse() helper to send a
 // 500 Internal Server Error status code and JSON response (containing the generic error message)
 // to the client
 func (app *application) serverErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
+	fmt.Print(err)
 	app.logError(r, err)
 
 	message := "the server encountered a problem and could not process your request"
 	app.errorResponse(w, r, 500, message)
+}
+
+func (app *application) authenticationRequiredResponse(w http.ResponseWriter, r *http.Request) {
+	message := "you must be authenticated to access this resource"
+	app.errorResponse(w, r, http.StatusUnauthorized, message)
+}
+
+func (app *application) notPermittedResponse(w http.ResponseWriter, r *http.Request) {
+	message := "your user account doesn't have the necessary permissions to access this resource"
+	app.errorResponse(w, r, http.StatusForbidden, message)
+}
+	
+
+
+func (app *application) inactiveAccountResponse(w http.ResponseWriter, r *http.Request) {
+	message := "your user account must be activated to access this resource"
+	app.errorResponse(w, r, http.StatusForbidden, message)
 }
 
 // Note that the errors parameter here has the type map[string]string, which is exactly

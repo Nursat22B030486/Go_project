@@ -12,6 +12,7 @@ import (
 	_ "github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 
+	"github.com/Nursat22B030486/go_project/pkg/read-it/jsonlog"
 	"github.com/Nursat22B030486/go_project/pkg/read-it/model"
 )
 
@@ -25,8 +26,8 @@ type config struct {
 
 type application struct {
 	config config
+	logger *jsonlog.Logger
 	models model.Models
-	logger *log.Logger
 }
 
 func main() {
@@ -36,9 +37,8 @@ func main() {
 	flag.StringVar(&cfg.db.dsn, "db-dsn", "postgresql://postgres:pa55word@localhost:5432/readit?sslmode=disable", "PostgreSQL DSN")
 	flag.Parse()
 
-	// Initialization of new looger 
-	logger := log.New(os.Stdout, "", log.Ldate | log.Ltime)
-
+	// Initialization of new looger
+	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
 	// connect to DB
 	db, err := openDB(cfg)
@@ -55,6 +55,8 @@ func main() {
 	}
 	defer db.Close()
 
+	logger.PrintInfo("database connection pool established", nil)
+
 	app := &application{
 		config: cfg,
 		models: model.NewModule(db),
@@ -62,19 +64,29 @@ func main() {
 	}
 
 	srv := &http.Server{
-		Addr: fmt.Sprintf(":%d", cfg.port),
+		Addr:    fmt.Sprintf(":%d", cfg.port),
 		Handler: app.routes(),
-		IdleTimeout: time.Minute,
-		ReadTimeout: 10 * time.Second,
+		// Create a new Go log.Logger instance with the log.New() function, passing in
+		// our custom Logger as the first parameter. The "" and 0 indicate that the
+		// log.Logger instance should not use a prefix or any flags.
+		ErrorLog:     log.New(logger, "", 0),
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
 
-	logger.Printf("Starting %s server on %s\n", cfg.env, srv.Addr)
+	// Again, we use the PrintInfo() method to write a "starting server" message at the
+	// INFO level. But this time we pass a map containing additional properties (the
+	// operating environment and server address) as the final parameter.
+	logger.PrintInfo("starting server", map[string]string{
+		"addr": srv.Addr,
+		"env":  cfg.env,
+	})
+
 	err1 := srv.ListenAndServe()
-	logger.Fatal(err1)
+	logger.PrintFatal(err1, nil)
 
 }
-
 
 func openDB(cfg config) (*sql.DB, error) {
 	// db, err := sql.Open("postgres", "user=postgres password=pa55word dbname=readit sslmode=disable")

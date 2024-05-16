@@ -1,0 +1,28 @@
+CRUD
+
+1 -> Create an article 
+
+http://localhost:8888/articles
+
+{
+    "title": "What is Programming?",
+    "genre": "education",
+    "body": "Programming is a way for us to give instructions to a computer. The code behind the computer runs everything that you do, from moving the cursor to watching videos to playing video games. It’s a neat way of telling the computer exactly what you want to do since computers will run the instructions you give them without questioning it (unless SkyNet takes over the world). But here’s the thing: computers don’t understand English, or any other human language. Computers speak in binary, meaning in 1’s and 0’s. Does that mean we have to speak to computers in 1’s and 0’s? Just imagine having to learn how to communicate in binary. It would be so hard for schools to teach and it would be tough for students to grasp."
+}
+
+2 -> Read an Article
+
+http://localhost:8888/articles/1
+
+3 -> Update an article
+http://localhost:8888/articles/1
+
+{
+    "title": "What is an API?",
+    "genre": "education",
+    "body": "API stands for Application Programming Interface. It is a set of programming code that allows data transmission between multiple applications. For example, when you use an application the application can send data to the server, the server then retrieves the data, interprets it, performs the necessary operation and send it back to thhttps://miro.medium.com/v2/resize:fit:828/format:webp/1*Qg1H8tpqifHIxURJQpPTgQ.pnge client which is the application. The application then interprets the data and present it in a readable format to the client. All of this process happens via API. Simply API is the messenger that takes the requests and tells the system what you want to do and then returns the response to you."
+}
+
+4 -> Delete an article
+
+http://localhost:8888/articles/1

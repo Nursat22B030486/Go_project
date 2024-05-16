@@ -74,15 +74,15 @@ func (app *application) listArticlesHandler(w http.ResponseWriter, r *http.Reque
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
-	
-	movies, metadata, err := app.models.Articles.GetAll(input.Title, input.Genre, input.Filters)
+
+	articles, metadata, err := app.models.Articles.GetAll(input.Title, input.Genre, input.Filters)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
 	}
 
-	// Send movies as a Jason format
-	err = app.writeJSON(w, http.StatusOK, envelope{"articles": movies, "metadata": metadata}, nil)
+	// Send articles as a Jason format
+	err = app.writeJSON(w, http.StatusOK, envelope{"articles": articles, "metadata": metadata}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
@@ -91,7 +91,7 @@ func (app *application) listArticlesHandler(w http.ResponseWriter, r *http.Reque
 func (app *application) createArticleHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Title string `json:"title"`
-		// AuthorId uint   `json:"author_id"`
+		AuthorId uint `json:"author_id"`
 		Genre string `json:"genre"`
 		Body  string `json:"body"`
 	}
@@ -104,7 +104,7 @@ func (app *application) createArticleHandler(w http.ResponseWriter, r *http.Requ
 
 	article := &model.Article{
 		Title: input.Title,
-		// AuthorId: input.AuthorId,
+		AuthorId: input.AuthorId,
 		Genre: input.Genre,
 		Body:  input.Body,
 	}

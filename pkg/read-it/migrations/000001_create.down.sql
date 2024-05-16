@@ -1,3 +1,11 @@
-DROP TABLE IF EXISTS users;
-DROP TABLE IF EXISTS articles;
+DROP TABLE IF EXISTS users CASCADE;
+
 DROP TABLE IF EXISTS user_saves;
+
+DROP TABLE IF EXISTS tokens;
+
+DROP TABLE IF EXISTS users_permissions;
+
+DROP TABLE IF EXISTS permissions;
+
+DROP TABLE IF EXISTS articles cascade;

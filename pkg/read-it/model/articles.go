@@ -12,7 +12,7 @@ import (
 type Article struct {
 	Id    string `json:"id"`
 	Title string `json:"title"`
-	// AuthorId  uint `json:"author_id"`
+	AuthorId  uint `json:"author_id"`
 	Genre     string `json:"genre"`
 	Body      string `json:"body"`
 	CreatedAt string `json:"createdAt"`
@@ -27,7 +27,7 @@ type ArticleModel struct {
 
 func (a ArticleModel) GetAll(title string, genre string, filters Filters) ([]*Article, Metadata, error) {
 	query := fmt.Sprintf(`
-		SELECT COUNT(*) OVER(), id, title, genre, body, created_at, updated_at 
+		SELECT COUNT(*) OVER(), id, title, author_id, genre, body, created_at, updated_at 
 		FROM articles
 		WHERE  (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '')
 		AND (to_tsvector('simple', genre) @@ plainto_tsquery('simple', $2) OR $2 = '')
@@ -56,6 +56,7 @@ func (a ArticleModel) GetAll(title string, genre string, filters Filters) ([]*Ar
 			&totalRecords,
 			&article.Id,
 			&article.Title,
+			&article.AuthorId,
 			&article.Genre,
 			&article.Body,
 			&article.CreatedAt,
@@ -79,11 +80,11 @@ func (a ArticleModel) GetAll(title string, genre string, filters Filters) ([]*Ar
 
 func (a ArticleModel) Insert(article *Article) error {
 	query := `
-		INSERT INTO articles(title, genre, body)
-		VALUES ($1, $2, $3)
+		INSERT INTO articles(title, author_id, genre, body)
+		VALUES ($1, $2, $3, $4)
 		RETURNING id, created_at, updated_at
 	`
-	args := []interface{}{article.Title, article.Genre, article.Body}
+	args := []interface{}{article.Title, article.AuthorId, article.Genre, article.Body}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -93,7 +94,7 @@ func (a ArticleModel) Insert(article *Article) error {
 
 func (a ArticleModel) Get(id int) (*Article, error) {
 	query := `
-		SELECT id, title, genre, body, created_at, updated_at 
+		SELECT id, title, author_id, genre, body, created_at, updated_at 
 		FROM articles
 		where id = $1
 	`
@@ -104,7 +105,7 @@ func (a ArticleModel) Get(id int) (*Article, error) {
 
 	row := a.DB.QueryRowContext(ctx, query, id)
 
-	err := row.Scan(&article.Id, &article.Title, &article.Genre, &article.Body, &article.CreatedAt, &article.UpdatedAt)
+	err := row.Scan(&article.Id, &article.Title, &article.AuthorId, &article.Genre, &article.Body, &article.CreatedAt, &article.UpdatedAt)
 
 	if err != nil {
 		return nil, err

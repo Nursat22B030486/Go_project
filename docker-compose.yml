@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      PORT: ${APP_PORT}
+      ENV: ${APP_ENV}
+      FILL: ${APP_FILL}
+      MIGRATIONS: ${APP_MIGRATIONS}
+      DSN: ${APP_DSN}
+    ports:
+      - "8888:8888"
+    restart: on-failure
+    volumes:
+      - .:/usr/src/app
+    depends_on:
+      - db
+    networks:
+      - fullstack
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - fullstack
+    
+volumes:
+  pgdata:
+
+networks:
+  fullstack:
+    driver: bridge
