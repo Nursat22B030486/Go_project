@@ -8,7 +8,7 @@
 <br> 
 
 #### Helath check
-    * `GET /healthcheck`
+   * `GET /healthcheck`
 #### User Registration
    * `POST /register`
 #### User Activation
