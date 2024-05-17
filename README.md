@@ -1,18 +1,34 @@
 # GO PROJECT  ->  Read It <BR>
 
 ****
-#### Read It is a platform where you can read articles of another users and save it as a favorite to read it later. Also, you can add your own article, edit and remove it as well.  
+#### Read It is a platform where you can read articles of another users, leave a comment and save it as a favorite to read it later. Also, you can add your own article, edit and remove it as well.  
 ---
 
 ## REST API
 <br> 
 
+#### Helath check
+    * `GET /healthcheck`
+#### User Registration
+   * `POST /register`
+#### User Activation
+   * `PUT /activate`
+#### User Login
+ * `POST /login`
+#### Endpoints which related with articles (Entity #1)
  * `POST /articles` 
- * `GET  /articles/saves`
- * `GET  /articles/:genre`
+ * `GET  /articles`
+ * `GET  /articles/:id`
  * `PUT  /article/:id`
- * `UPDATE /articles/:id`
  * `DELETE /articles/:id`
+
+#### Endpoints which related with comments (Entity #2)
+ * `POST /articles/:article_id/comments` 
+ * `GET  /articles/:article_id/comments`
+ * `GET  /articles/:article_id/comments/:comment_id`
+ * `PUT  /articles/:article_id/comments/:comment_id`
+ * `DELETE /articles/:article_id/comments/:comment_id`
+
 
 ## Database Structure
 
@@ -43,6 +59,14 @@ Table User_saves {
   id serial [primary key]
   user_id serial [not null, ref: > Users.user_id]
   article_id serial [not null, ref: > Articles.id]
+}
+
+Table Comments {
+  id serial [primary key]
+  article_id integer [not null, ref: > Articles.id]
+  user_id  integer [not null, ref: > Users.user_id]
+  body text [not null]
+  created_at timestamp 
 }
 ```
 
